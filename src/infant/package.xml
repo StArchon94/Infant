@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>infant</name>
+  <version>0.0.0</version>
+  <description>Infant is an interactive installation. This project artistically demonstrates an infant’s reaction to the external stimulation with the help of various information technologies, such as machine learning and digital signal processing.</description>
+  <maintainer email="slin@ttic.edu">Shengjie Lin</maintainer>
+  <license>TODO: License declaration</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <depend>rclpy</depend>
+
+  <exec_depend>infant_interfaces</exec_depend>
+  
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
