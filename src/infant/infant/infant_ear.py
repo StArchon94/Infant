@@ -14,7 +14,7 @@ class InfantEar(Node):
         super().__init__('infant_ear')
         self.reset = False
         pd_read_only = ParameterDescriptor(read_only=True)
-        self.chunk, self.alert, self.vol_lo, self.vol_hi, self.discomfort_rate, self.alert_rate, self.alert_decay = self.declare_parameters('', [('chunk_size', 0, pd_read_only), ('alert', .0), ('vol_lo', 8), ('vol_hi', 9), ('discomfort_rate', 10), ('alert_rate', 10), ('alert_decay', 1)])
+        self.chunk, self.alert, self.vol_lo, self.vol_hi, self.discomfort_rate, self.alert_rate, self.alert_decay = self.declare_parameters('', [('chunk_size', 0, pd_read_only), ('alert', .0), ('vol_lo', 7.5), ('vol_hi', 8.4), ('discomfort_rate', 60), ('alert_rate', 30), ('alert_decay', 3)])
         self.pub_alert = self.create_publisher(Float64, 'ear_alert', 1)
         self.pub_comfort = self.create_publisher(Float64, 'change_comfort', 10)
         self.sub_reset = self.create_subscription(Empty, 'reset', self.reset_callback, 1)
