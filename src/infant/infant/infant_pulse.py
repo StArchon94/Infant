@@ -28,7 +28,7 @@ class InfantPulse(Node):
             except Exception:
                 pass
             else:
-                if i > 800:
+                if i >= 768:
                     if not is_pulsing:
                         is_pulsing = True
                     t_last = time()

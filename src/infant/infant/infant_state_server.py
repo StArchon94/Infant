@@ -1,8 +1,10 @@
+import os
 from time import time
 
 import numpy as np
 import rclpy
 from infant_interfaces.msg import InfantState
+from rcl_interfaces.msg import ParameterDescriptor
 from rclpy.node import Node
 from std_msgs.msg import Bool, Empty, Float64
 
@@ -10,12 +12,14 @@ from std_msgs.msg import Bool, Empty, Float64
 class InfantStateServer(Node):
     def __init__(self):
         super().__init__('infant_state_server')
+        pd_read_only = ParameterDescriptor(read_only=True)
         # Infant stages:
         # 0 - premature
         # 1 - mature
         # 2 - crying
         # 3,4 - numbering
-        self.n_infants, self.comfort, self.stage, self.recovery = self.declare_parameters('', [('n_infants', 0), ('comfort', 50.0), ('stage', 3), ('recovery', .0)])
+        self.n_infants_path, self.comfort, self.stage, self.recovery = self.declare_parameters('', [('n_infants_path', '/home/slin/infant_ws/src/infant/resource/n_infants.npy', pd_read_only), ('comfort', 50.0), ('stage', 3), ('recovery', .0)])
+        self.n_infants = self.declare_parameter('n_infants', np.asscalar(np.load(self.n_infants_path.value)) if os.path.exists(self.n_infants_path.value) else 0)
         self.ear_alert = 0
         self.eye_alert = 0
         self.alert = .0
@@ -85,6 +89,7 @@ class InfantStateServer(Node):
         elif self.stage.value == 3:
             elapsed = time() - self.t
             if elapsed > 5:
+                np.save(self.n_infants_path.value, self.n_infants.value)
                 self.n_infants._value += 1
                 self.stage._value = 4
                 self.set_parameters([self.n_infants, self.stage])

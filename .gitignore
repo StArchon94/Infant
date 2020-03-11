@@ -60,3 +60,4 @@ target/
 .vscode/
 /install/
 log/
+src/infant/resource/n_infants.npy
