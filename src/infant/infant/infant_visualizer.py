@@ -89,13 +89,13 @@ class InfantVisualizer(Node):
                     cur_focus += (.5 - cur_focus) * self.alpha * dt
                     cur_y += (1 - cur_y) * self.alpha * dt
                 elif self.stage == 1:
-                    if self.comfort < 50:
-                        id = np.round(100 - self.comfort / 5 * 10).astype(int)
+                    if self.comfort < 40:
+                        id = np.round(100 - self.comfort / 4 * 10).astype(int)
                         tgt_img = self.figs['unsatisfied'][id - 1] if id else self.figs['plain']
                         cur_focus += (.5 - cur_focus) * self.alpha * dt
                         cur_y += (1 - cur_y) * self.alpha * dt
                     else:
-                        id = np.round((self.comfort - 50) / 5 * 10).astype(int)
+                        id = np.round((self.comfort - 40) / 6 * 10).astype(int)
                         tgt_img = self.figs['satisfied'][id - 1] if id else self.figs['plain']
                         cur_focus += (self.tgt_focus - cur_focus) * self.alpha * dt
                         theta += dt
