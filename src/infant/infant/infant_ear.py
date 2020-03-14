@@ -1,5 +1,4 @@
 from threading import Thread
-from time import time
 
 import numpy as np
 import pyaudio
@@ -14,7 +13,7 @@ class InfantEar(Node):
         super().__init__('infant_ear')
         self.reset = False
         pd_read_only = ParameterDescriptor(read_only=True)
-        self.chunk, self.alert, self.vol_lo, self.vol_hi, self.discomfort_rate, self.alert_rate, self.alert_decay = self.declare_parameters('', [('chunk_size', 0, pd_read_only), ('alert', .0), ('vol_lo', 7.5), ('vol_hi', 8.4), ('discomfort_rate', 60), ('alert_rate', 30), ('alert_decay', 3)])
+        self.chunk, self.alert, self.delta_vol_lo, self.delta_vol_hi, self.discomfort_rate, self.alert_rate, self.alert_decay = self.declare_parameters('', [('chunk_size', 0, pd_read_only), ('alert', .0), ('delta_vol_lo', 1.6), ('delta_vol_hi', 2.5), ('discomfort_rate', 60), ('alert_rate', 30), ('alert_decay', 3)])
         self.pub_alert = self.create_publisher(Float64, 'ear_alert', 1)
         self.pub_comfort = self.create_publisher(Float64, 'change_comfort', 10)
         self.sub_reset = self.create_subscription(Empty, 'reset', self.reset_callback, 1)
@@ -28,20 +27,21 @@ class InfantEar(Node):
                 nc = device_info['maxInputChannels']
                 device_index = device_info['index']
                 break
-        chunk = self.chunk.value if self.chunk.value else int(fr * .3)
+        dt = .3
+        chunk = self.chunk.value if self.chunk.value else int(fr * dt)
         stream = p.open(fr, nc, pyaudio.paInt16, input=True, input_device_index=device_index, frames_per_buffer=chunk)
-        t = time()
+        avg_vol = None
+        total = 0
         while True:
             if self.reset:
                 self.alert._value = .0
                 self.reset = False
             data = np.frombuffer(stream.read(chunk, exception_on_overflow=False), dtype='<i2').astype(float)
-            t_now = time()
-            dt = t_now - t
-            t = t_now
             vol = np.log10(np.mean(data**2))
-            e1 = vol - self.vol_hi.value
-            e2 = vol - self.vol_lo.value
+            avg_vol = (avg_vol * total + vol) / (total + 1) if total else vol
+            total += 1
+            e1 = vol - avg_vol - self.delta_vol_hi.value
+            e2 = vol - avg_vol - self.delta_vol_lo.value
             if e1 > 0:
                 self.pub_comfort.publish(Float64(data=-self.discomfort_rate.value * e1 * dt))
             elif e2 > 0:

@@ -12,14 +12,14 @@ def generate_launch_description():
             package='infant',
             node_executable='eye',
         ),
-        Node(
-            package='infant',
-            node_executable='touch',
-        ),
-        Node(
-            package='infant',
-            node_executable='pulse',
-        ),
+        # Node(
+        #     package='infant',
+        #     node_executable='touch',
+        # ),
+        # Node(
+        #     package='infant',
+        #     node_executable='pulse',
+        # ),
         Node(
             package='infant',
             node_executable='state_server',

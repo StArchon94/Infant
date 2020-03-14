@@ -17,7 +17,7 @@ class InfantEye(Node):
         super().__init__('infant_eye')
         self.reset = False
         pd_read_only = ParameterDescriptor(read_only=True)
-        self.cam_id, self.detector_weight_path, self.tracker_half_life, self.tracker_timeout, self.base_alert = self.declare_parameters('', [('cam_id', 2, pd_read_only), ('detector_weight_path', '/home/slin/cam_test/FaceBoxes/weights/FaceBoxes.pth', pd_read_only), ('tracker_half_life', 30, pd_read_only), ('tracker_timeout', 3, pd_read_only), ('base_alert', 300)])
+        self.cam_id, self.detector_weight_path, self.tracker_half_life, self.tracker_timeout, self.base_alert = self.declare_parameters('', [('cam_id', 4, pd_read_only), ('detector_weight_path', '/home/slin/infant_ws/src/infant/infant/FaceBoxes/weights/FaceBoxes.pth', pd_read_only), ('tracker_half_life', 30, pd_read_only), ('tracker_timeout', 3, pd_read_only), ('base_alert', 300)])
         self.pub_alert = self.create_publisher(Float64, 'eye_alert', 1)
         self.pub_focus = self.create_publisher(Float64, 'eye_focus', 1)
         self.sub_reset = self.create_subscription(Empty, 'reset', self.reset_callback, 1)
