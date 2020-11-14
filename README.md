@@ -1,6 +1,7 @@
 1. clone the repo
 
     sudo apt install git
+    
     git clone https://github.com/StArchon94/Infant ~/Documents/infant_ws
 2. install ROS2
 
