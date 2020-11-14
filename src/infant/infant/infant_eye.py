@@ -1,9 +1,11 @@
+import os
 import time
 from threading import Thread
 
 import cv2
 import numpy as np
 import rclpy
+from ament_index_python.packages import get_package_share_directory
 from rcl_interfaces.msg import ParameterDescriptor
 from rclpy.node import Node
 from std_msgs.msg import Empty, Float64
@@ -17,7 +19,8 @@ class InfantEye(Node):
         super().__init__('infant_eye')
         self.reset = False
         pd_read_only = ParameterDescriptor(read_only=True)
-        self.cam_id, self.detector_weight_path, self.tracker_half_life, self.tracker_timeout, self.base_alert = self.declare_parameters('', [('cam_id', 4, pd_read_only), ('detector_weight_path', '/home/slin/infant_ws/src/infant/infant/FaceBoxes/weights/FaceBoxes.pth', pd_read_only), ('tracker_half_life', 30, pd_read_only), ('tracker_timeout', 3, pd_read_only), ('base_alert', 300)])
+        self.cam_id, self.tracker_half_life, self.tracker_timeout, self.base_alert = self.declare_parameters('', [('cam_id', 0, pd_read_only), ('tracker_half_life', 30, pd_read_only), ('tracker_timeout', 3, pd_read_only), ('base_alert', 300)])
+        
         self.pub_alert = self.create_publisher(Float64, 'eye_alert', 1)
         self.pub_focus = self.create_publisher(Float64, 'eye_focus', 1)
         self.sub_reset = self.create_subscription(Empty, 'reset', self.reset_callback, 1)
@@ -25,7 +28,7 @@ class InfantEye(Node):
     def start_looking(self):
         cap = cv2.VideoCapture(self.cam_id.value)
         img_area = None
-        face_detector = FaceDetector(self.detector_weight_path.value)
+        face_detector = FaceDetector(os.path.join(get_package_share_directory('infant'), 'resource/FaceBoxes.pth'))
         ct = CentroidTracker(self.tracker_half_life.value, self.tracker_timeout.value)
         while True:
             if self.reset:

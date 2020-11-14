@@ -6,26 +6,26 @@ def generate_launch_description():
     return LaunchDescription([
         Node(
             package='infant',
-            node_executable='ear',
+            executable='ear',
         ),
         Node(
             package='infant',
-            node_executable='eye',
+            executable='eye',
         ),
         Node(
             package='infant',
-            node_executable='touch',
+            executable='touch',
         ),
         Node(
             package='infant',
-            node_executable='pulse',
+            executable='pulse',
         ),
         Node(
             package='infant',
-            node_executable='state_server',
+            executable='state_server',
         ),
         Node(
             package='infant',
-            node_executable='visualizer',
+            executable='visualizer',
         ),
     ])

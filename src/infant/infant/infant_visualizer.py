@@ -7,6 +7,7 @@ from time import time
 import cv2
 import numpy as np
 import rclpy
+from ament_index_python.packages import get_package_share_directory
 from infant_interfaces.msg import InfantState
 from rcl_interfaces.msg import ParameterDescriptor
 from rclpy.node import Node
@@ -18,13 +19,14 @@ class InfantVisualizer(Node):
         super().__init__('infant_visualizer')
         self.reset = False
         pd_read_only = ParameterDescriptor(read_only=True)
-        self.resource_dir, self.half_life, self.delta_x, self.delta_y, self.period = self.declare_parameters('', [('resource_dir', '/home/slin/infant_ws/src/infant/resource/', pd_read_only), ('half_life', 0.4, pd_read_only), ('delta_x', .85, pd_read_only), ('delta_y', .9, pd_read_only), ('period', 3)])
+        self.half_life, self.delta_x, self.delta_y, self.period = self.declare_parameters('', [('half_life', 0.4, pd_read_only), ('delta_x', .85, pd_read_only), ('delta_y', .9, pd_read_only), ('period', 3)])
         self.figs = {}
-        self.figs['plain'] = cv2.imread(os.path.join(self.resource_dir.value, 'plain.jpg'))
-        self.figs['pixelated'] = [cv2.imread(os.path.join(self.resource_dir.value, f'pixelated/pixelated_{i+1}.jpg')) for i in range(100)]
-        self.figs['rotten'] = [cv2.imread(os.path.join(self.resource_dir.value, f'rotten/rotten_{i+1}.jpg')) for i in range(100)]
-        self.figs['satisfied'] = [cv2.imread(os.path.join(self.resource_dir.value, f'satisfied/satisfied_{i+1}.jpg')) for i in range(100)]
-        self.figs['unsatisfied'] = [cv2.imread(os.path.join(self.resource_dir.value, f'unsatisfied/unsatisfied_{i+1}.jpg')) for i in range(100)]
+        resource_dir = os.path.join(get_package_share_directory('infant'), 'resource/')
+        self.figs['plain'] = cv2.imread(os.path.join(resource_dir, 'plain.jpg'))
+        self.figs['pixelated'] = [cv2.imread(os.path.join(resource_dir, f'pixelated/pixelated_{i+1}.jpg')) for i in range(100)]
+        self.figs['rotten'] = [cv2.imread(os.path.join(resource_dir, f'rotten/rotten_{i+1}.jpg')) for i in range(100)]
+        self.figs['satisfied'] = [cv2.imread(os.path.join(resource_dir, f'satisfied/satisfied_{i+1}.jpg')) for i in range(100)]
+        self.figs['unsatisfied'] = [cv2.imread(os.path.join(resource_dir, f'unsatisfied/unsatisfied_{i+1}.jpg')) for i in range(100)]
         self.alpha = np.log(2) / self.half_life.value
 
         self.sub_state = self.create_subscription(InfantState, 'state', self.state_callback, 1)
