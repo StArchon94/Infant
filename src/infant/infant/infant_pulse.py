@@ -4,15 +4,19 @@ from time import time
 import rclpy
 from rclpy.node import Node
 from serial import Serial
-from serial.tools.list_ports import comports
 from std_msgs.msg import Float64
 
 
 class InfantPulse(Node):
     def __init__(self):
         super().__init__('infant_pulse')
+        self.pressure = 0
         self.recovery_rate, self.recovery_decay, self.timeout = self.declare_parameters('', [('recovery_rate', 10), ('recovery_decay', 9), ('timeout', 1.5)])
+        self.sub_pressure = self.create_subscription(Float64, 'touch_pressure', self.pressure_callback, 1)
         self.pub_recovery = self.create_publisher(Float64, 'change_recovery', 10)
+
+    def pressure_callback(self, msg):
+        self.pressure = msg.data
 
     def start_feeling(self):
         s = Serial(port='/dev/ttyACM1')
@@ -36,7 +40,7 @@ class InfantPulse(Node):
                     delta = time() - t_last
                     if delta > self.timeout.value:
                         is_pulsing = False
-                self.pub_recovery.publish(Float64(data=(self.recovery_rate.value * is_pulsing - self.recovery_decay.value) * dt))
+                self.pub_recovery.publish(Float64(data=(self.recovery_rate.value * is_pulsing * (not self.pressure) - self.recovery_decay.value) * dt))
 
 
 def main():

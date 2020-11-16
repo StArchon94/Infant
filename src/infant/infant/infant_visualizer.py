@@ -1,5 +1,3 @@
-import argparse
-import math
 import os
 from threading import Thread
 from time import time
@@ -13,24 +11,29 @@ from rcl_interfaces.msg import ParameterDescriptor
 from rclpy.node import Node
 from std_msgs.msg import Empty, Float64
 
+from .utils import Squeezer, pixelate
 
 class InfantVisualizer(Node):
     def __init__(self):
         super().__init__('infant_visualizer')
         self.reset = False
         pd_read_only = ParameterDescriptor(read_only=True)
-        self.half_life, self.delta_x, self.delta_y, self.period = self.declare_parameters('', [('half_life', 0.4, pd_read_only), ('delta_x', .85, pd_read_only), ('delta_y', .9, pd_read_only), ('period', 3)])
+        self.half_life, self.delta, self.period = self.declare_parameters('', [('half_life', 0.4, pd_read_only), ('delta', .8, pd_read_only), ('period', 3)])
         self.figs = {}
         resource_dir = os.path.join(get_package_share_directory('infant'), 'resource/')
-        self.figs['plain'] = cv2.imread(os.path.join(resource_dir, 'plain.jpg'))
-        self.figs['pixelated'] = [cv2.imread(os.path.join(resource_dir, f'pixelated/pixelated_{i+1}.jpg')) for i in range(100)]
-        self.figs['rotten'] = [cv2.imread(os.path.join(resource_dir, f'rotten/rotten_{i+1}.jpg')) for i in range(100)]
-        self.figs['satisfied'] = [cv2.imread(os.path.join(resource_dir, f'satisfied/satisfied_{i+1}.jpg')) for i in range(100)]
-        self.figs['unsatisfied'] = [cv2.imread(os.path.join(resource_dir, f'unsatisfied/unsatisfied_{i+1}.jpg')) for i in range(100)]
+        for stance in ['low', 'normal', 'high']:
+            self.figs[stance] = {}
+            self.figs[stance]['plain'] = cv2.imread(os.path.join(resource_dir, f'{stance}_plain.jpg'))
+            for style in ['rot', 'sat', 'unsat']:
+                if style == 'rot' and stance != 'low':
+                    continue
+                self.figs[stance][style] = [cv2.imread(os.path.join(resource_dir, f'{stance}_{style}/{i}.jpg')) for i in range(1, 101)]
         self.alpha = np.log(2) / self.half_life.value
+        self.h_out, self.w_out = 1200, 1200
 
         self.sub_state = self.create_subscription(InfantState, 'state', self.state_callback, 1)
         self.sub_focus = self.create_subscription(Float64, 'eye_focus', self.focus_callback, 1)
+        self.sub_pressure = self.create_subscription(Float64, 'touch_pressure', self.pressure_callback, 1)
         self.sub_reset = self.create_subscription(Empty, 'reset', self.reset_callback, 1)
         self.alert = None
         self.comfort = None
@@ -38,6 +41,7 @@ class InfantVisualizer(Node):
         self.num = None
         self.recovery = None
         self.tgt_focus = None
+        self.tgt_pressure = None
 
     def state_callback(self, msg):
         self.alert = msg.alert
@@ -48,6 +52,9 @@ class InfantVisualizer(Node):
 
     def focus_callback(self, msg):
         self.tgt_focus = msg.data
+
+    def pressure_callback(self, msg):
+        self.tgt_pressure = msg.data
 
     def reset_callback(self, msg):
         self.reset = True
@@ -60,7 +67,7 @@ class InfantVisualizer(Node):
             textsize = cv2.getTextSize(text, font, font_scale, thickness)[0]
             textX = (img.shape[1] - textsize[0]) // 2
             textY = (img.shape[0] + textsize[1]) // 2
-            cv2.putText(img, text, (textX, textY), font, font_scale, (0, 0, 0), thickness=thickness)
+            cv2.putText(img, text, (textX, textY), font, font_scale, (255, 255, 255), thickness=thickness)
             return img
 
         cv2.namedWindow('', cv2.WND_PROP_FULLSCREEN)
@@ -69,14 +76,16 @@ class InfantVisualizer(Node):
         cur_img = None
         cur_y = 1
         cur_focus = .5
+        cur_pressure = 0
         theta = 0
-        a_x = 1 - self.delta_x.value
-        a_y = (1 - self.delta_y.value) / 2
-        h, w = self.figs['plain'].shape[:2]
-        delta_x = np.round(self.delta_x.value * w).astype(int)
-        delta_y = np.round(self.delta_y.value * h).astype(int)
+        a_x = 1 - self.delta.value
+        a_y = (1 - self.delta.value) / 2
+        h, w = self.figs['normal']['plain'].shape[:2]
+        squeezer = Squeezer(h, w)
+        delta_x = np.round(self.delta.value * w).astype(int)
+        delta_y = np.round(self.delta.value * h).astype(int)
         while True:
-            if self.alert is None or self.comfort is None or self.stage is None or self.num is None or self.recovery is None or self.tgt_focus is None:
+            if any(np.equal([self.alert, self.comfort, self.stage, self.num, self.recovery, self.tgt_focus, self.tgt_pressure], None)):
                 continue
             if self.reset:
                 cur_img = None
@@ -86,37 +95,46 @@ class InfantVisualizer(Node):
                 dt = 0 if t is None else t_now - t
                 t = t_now
                 if not self.stage:
-                    id = np.round(100 - self.alert / 3 * 10).astype(int)
-                    tgt_img = self.figs['pixelated'][id - 1] if id else self.figs['plain']
+                    tgt_img = self.figs['low']['plain']
                     cur_focus += (.5 - cur_focus) * self.alpha * dt
                     cur_y += (1 - cur_y) * self.alpha * dt
                 elif self.stage == 1:
+                    if self.alert < 30:
+                        stance = 'low'
+                    elif self.alert < 70:
+                        stance = 'normal'
+                    else:
+                        stance = 'high'
                     if self.comfort < 40:
-                        id = np.round(100 - self.comfort / 4 * 10).astype(int)
-                        tgt_img = self.figs['unsatisfied'][id - 1] if id else self.figs['plain']
+                        idx = np.round(100 - self.comfort / 4 * 10).astype(int)
+                        tgt_img = self.figs[stance]['unsat'][idx - 1] if idx else self.figs[stance]['plain']
                         cur_focus += (.5 - cur_focus) * self.alpha * dt
                         cur_y += (1 - cur_y) * self.alpha * dt
                     else:
-                        id = np.round((self.comfort - 40) / 6 * 10).astype(int)
-                        tgt_img = self.figs['satisfied'][id - 1] if id else self.figs['plain']
+                        idx = np.round((self.comfort - 40) / 6 * 10).astype(int)
+                        tgt_img = self.figs[stance]['sat'][idx - 1] if idx else self.figs[stance]['plain']
                         cur_focus += (self.tgt_focus - cur_focus) * self.alpha * dt
                         theta += dt
                         tgt_y = 1 - np.sin(np.pi * 2 / self.period.value * theta) * self.alert / 100
                         cur_y += (tgt_y - cur_y) * self.alpha * dt
                 else:
-                    id = np.round(100 - self.recovery).astype(int)
-                    tgt_img = self.figs['rotten'][id - 1] if id else self.figs['plain']
+                    idx = np.round(100 - self.recovery).astype(int)
+                    tgt_img = self.figs['low']['rot'][idx - 1] if idx else self.figs['low']['plain']
                     cur_focus += (.5 - cur_focus) * self.alpha * dt
                     cur_y += (1 - cur_y) * self.alpha * dt
+                cur_pressure += (self.tgt_pressure - cur_pressure) * self.alpha * dt
+                tgt_img = squeezer.squeeze(tgt_img, cur_pressure)
+                if not self.stage:
+                    tgt_img = pixelate(tgt_img, np.round(100 - self.alert / 3 * 10).astype(int))
                 if cur_img is None:
                     cur_img = np.array(tgt_img, dtype=float)
                 else:
                     cur_img += (tgt_img - cur_img) * self.alpha * dt
                 x0 = np.round(a_x * w * (1 - cur_focus)).astype(int)
                 y0 = np.round(a_y * h * cur_y).astype(int)
-                cv2.imshow('', cv2.resize(cur_img[y0:y0 + delta_y, x0:x0 + delta_x].astype(np.uint8), (1080, 1920)))
+                cv2.imshow('', cv2.resize(cur_img[y0:y0 + delta_y, x0:x0 + delta_x], (self.w_out, self.h_out)).astype(np.uint8))
             else:
-                img = np.full((1920, 1080), 255, dtype=np.uint8)
+                img = np.full((self.h_out, self.w_out), 0, dtype=np.uint8)
                 write_text(img, str(self.num))
                 cv2.imshow('', img)
             cv2.waitKey(1)

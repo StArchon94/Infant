@@ -6,7 +6,7 @@ import rclpy
 from infant_interfaces.msg import InfantState
 from rcl_interfaces.msg import ParameterDescriptor
 from rclpy.node import Node
-from std_msgs.msg import Bool, Empty, Float64
+from std_msgs.msg import Empty, Float64
 
 
 class InfantStateServer(Node):
@@ -59,13 +59,14 @@ class InfantStateServer(Node):
             self.t = time()
         self.set_parameters(params)
 
-    def reset(self):
-        self.alert = .0
+    def reset(self, stage):
+        self.comfort._value = 50.0
+        self.stage._value = stage
+        self.recovery._value = .0
         self.ear_alert = 0
         self.eye_alert = 0
-        self.comfort._value = 50.0
-        self.recovery._value = .0
-        self.set_parameters([self.comfort, self.recovery])
+        self.alert = .0
+        self.set_parameters([self.comfort, self.stage, self.recovery])
 
     def recovery_callback(self, msg):
         if self.stage.value != 2:
@@ -73,9 +74,7 @@ class InfantStateServer(Node):
         self.recovery._value = np.clip(self.recovery.value + msg.data, 0, 100)
         if self.recovery.value == 100:
             self.pub_reset.publish(Empty())
-            self.reset()
-            self.stage._value = 1
-            self.set_parameters([self.stage])
+            self.reset(1)
         else:
             self.set_parameters([self.recovery])
 
@@ -98,9 +97,7 @@ class InfantStateServer(Node):
             elapsed = time() - self.t
             if elapsed > 5:
                 self.pub_reset.publish(Empty())
-                self.reset()
-                self.stage._value = 0
-                self.set_parameters([self.stage])
+                self.reset(0)
         self.pub_state.publish(InfantState(alert=self.alert, comfort=self.comfort.value, stage=self.stage.value, num=self.n_infants.value, recovery=self.recovery.value))
 
 
