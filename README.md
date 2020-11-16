@@ -32,11 +32,12 @@
 
     change cam_id in infant_eye.py#L20
 10. change n_infants_path in infant_state_server.py#L22
-11. build the package
+11. change resolution in infant_visualizer.py#L32
+12. build the package
 
     colcon build --symlink-install
-12. plug in touch sensor first, then pulse sensor
-13. change ~/Documents/infant_ws/run/run.sh#L{3, 4}
-14. run
+13. plug in touch sensor first, then pulse sensor
+14. change ~/Documents/infant_ws/run/run.sh#L{3, 4}
+15. run
 
     ~/Documents/infant_ws/run/run.sh
