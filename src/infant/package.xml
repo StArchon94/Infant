@@ -9,9 +9,18 @@
 
   <buildtool_depend>ament_python</buildtool_depend>
 
-  <depend>rclpy</depend>
-
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>cv2</exec_depend>
   <exec_depend>infant_interfaces</exec_depend>
+  <exec_depend>numpy</exec_depend>
+  <exec_depend>pyaudio</exec_depend>
+  <exec_depend>rcl_interfaces</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>scipy</exec_depend>
+  <exec_depend>serial</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>torch</exec_depend>
+  <exec_depend>xml</exec_depend>
   
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
