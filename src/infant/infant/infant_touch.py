@@ -18,15 +18,13 @@ class InfantTouch(Node):
     def start_feeling(self):
         s = Serial(port='/dev/ttyACM0')
         t = time()
-        c = np.pi / 1024
         while True:
             try:
                 string = s.readline().decode().rstrip()
                 t_now = time()
                 dt = np.min((t_now - t, self.max_dt.value))
                 t = t_now
-                x = c * int(string)
-                # self.get_logger().info(str(x))
+                x = np.clip(0, 1, int(string) / 1024) * np.pi
             except Exception:
                 pass
             else:
