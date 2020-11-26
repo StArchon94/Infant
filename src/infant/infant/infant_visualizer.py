@@ -13,8 +13,9 @@ from std_msgs.msg import Empty, Float64
 
 from .utils import Squeezer, pixelate
 
+
 class InfantVisualizer(Node):
-    def __init__(self):
+    def __init__(self, h, w, l=None):
         super().__init__('infant_visualizer')
         self.reset = False
         pd_read_only = ParameterDescriptor(read_only=True)
@@ -29,7 +30,8 @@ class InfantVisualizer(Node):
                     continue
                 self.figs[stance][style] = [cv2.imread(os.path.join(resource_dir, f'{stance}_{style}/{i}.jpg')) for i in range(1, 101)]
         self.alpha = np.log(2) / self.half_life.value
-        self.h_out, self.w_out = 1200, 1200
+        self.h, self.w = h, w
+        self.l = min(h, w) if l is None else l
 
         self.sub_state = self.create_subscription(InfantState, 'state', self.state_callback, 1)
         self.sub_focus = self.create_subscription(Float64, 'eye_focus', self.focus_callback, 1)
@@ -70,7 +72,7 @@ class InfantVisualizer(Node):
             cv2.putText(img, text, (textX, textY), font, font_scale, (255, 255, 255), thickness=thickness)
             return img
 
-        cv2.namedWindow('', cv2.WND_PROP_FULLSCREEN)
+        cv2.namedWindow('', flags=cv2.WND_PROP_FULLSCREEN)
         cv2.setWindowProperty('', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         t = None
         cur_img = None
@@ -133,9 +135,11 @@ class InfantVisualizer(Node):
                     cur_img += (tgt_img - cur_img) * self.alpha * dt
                 x0 = np.round(a_x * w * (1 - cur_focus)).astype(int)
                 y0 = np.round(a_y * h * cur_y).astype(int)
-                cv2.imshow('', cv2.resize(cur_img[y0:y0 + delta_y, x0:x0 + delta_x], (self.w_out, self.h_out)).astype(np.uint8))
+                img = np.full((self.h, self.w, 3), 0, dtype=np.uint8)
+                img[(self.h - self.l) // 2:(self.h + self.l) // 2, (self.w - self.l) // 2:(self.w + self.l) // 2] = cv2.resize(cur_img[y0:y0 + delta_y, x0:x0 + delta_x], (self.l, self.l))
+                cv2.imshow('', img)
             else:
-                img = np.full((self.h_out, self.w_out), 0, dtype=np.uint8)
+                img = np.full((self.h, self.w), 0, dtype=np.uint8)
                 write_text(img, str(self.num))
                 cv2.imshow('', img)
             cv2.waitKey(1)
@@ -143,6 +147,6 @@ class InfantVisualizer(Node):
 
 def main():
     rclpy.init()
-    infant_visualizer = InfantVisualizer()
+    infant_visualizer = InfantVisualizer(1440, 2560)
     Thread(target=infant_visualizer.start_plotting).start()
     rclpy.spin(infant_visualizer)
