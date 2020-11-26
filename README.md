@@ -32,7 +32,7 @@
 
     change cam_id in infant_eye.py#L20
 10. change n_infants_path in infant_state_server.py#L21
-11. change resolution in infant_visualizer.py#L32
+11. change resolution in infant_visualizer.py#L149
 12. build the package
 
     cd ~/Documents/infant_ws

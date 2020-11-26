@@ -15,7 +15,7 @@ from .utils import Squeezer, pixelate
 
 
 class InfantVisualizer(Node):
-    def __init__(self, h, w):
+    def __init__(self, h, w, l=None):
         super().__init__('infant_visualizer')
         self.reset = False
         pd_read_only = ParameterDescriptor(read_only=True)
@@ -31,7 +31,7 @@ class InfantVisualizer(Node):
                 self.figs[stance][style] = [cv2.imread(os.path.join(resource_dir, f'{stance}_{style}/{i}.jpg')) for i in range(1, 101)]
         self.alpha = np.log(2) / self.half_life.value
         self.h, self.w = h, w
-        self.l = min(h, w)
+        self.l = min(h, w) if l is None else l
 
         self.sub_state = self.create_subscription(InfantState, 'state', self.state_callback, 1)
         self.sub_focus = self.create_subscription(Float64, 'eye_focus', self.focus_callback, 1)
