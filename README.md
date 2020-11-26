@@ -31,10 +31,12 @@
     plug in the webcam and find the working id for cam_test/test.py#L19
 
     change cam_id in infant_eye.py#L20
-10. change n_infants_path in infant_state_server.py#L22
+10. change n_infants_path in infant_state_server.py#L21
 11. change resolution in infant_visualizer.py#L32
 12. build the package
 
+    cd ~/Documents/infant_ws
+    
     colcon build --symlink-install
 13. plug in touch sensor first, then pulse sensor
 14. change ~/Documents/infant_ws/run/run.sh#L{3, 4}
