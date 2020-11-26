@@ -26,6 +26,7 @@ class InfantTouch(Node):
                 dt = np.min((t_now - t, self.max_dt.value))
                 t = t_now
                 x = c * int(string)
+                # self.get_logger().info(str(x))
             except Exception:
                 pass
             else:

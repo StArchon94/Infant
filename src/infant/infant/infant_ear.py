@@ -22,7 +22,7 @@ class InfantEar(Node):
         p = pyaudio.PyAudio()
         for i in range(p.get_device_count()):
             device_info = p.get_device_info_by_index(i)
-            if 'Maono Elf' in device_info['name']:
+            if device_info['name'] == 'USB Device 0x46d:0x825: Audio (hw:0,0)':
                 fr = int(device_info['defaultSampleRate'])
                 nc = device_info['maxInputChannels']
                 device_index = device_info['index']

@@ -18,7 +18,7 @@ class InfantStateServer(Node):
         # 1 - mature
         # 2 - crying
         # 3,4 - numbering
-        self.n_infants_path, self.comfort, self.stage, self.recovery = self.declare_parameters('', [('n_infants_path', '/home/slin/Documents/Projects/infant_ws/run/n_infants.npy', pd_read_only), ('comfort', 50.0), ('stage', 3), ('recovery', .0)])
+        self.n_infants_path, self.comfort, self.stage, self.recovery = self.declare_parameters('', [('n_infants_path', '/home/ionaliu/Documents/infant_ws/run/n_infants.npy', pd_read_only), ('comfort', 50.0), ('stage', 3), ('recovery', .0)])
         self.n_infants = self.declare_parameter('n_infants', np.asscalar(np.load(self.n_infants_path.value)) if os.path.exists(self.n_infants_path.value) else 0)
         self.ear_alert = 0
         self.eye_alert = 0
