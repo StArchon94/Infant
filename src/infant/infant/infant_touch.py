@@ -24,12 +24,12 @@ class InfantTouch(Node):
                 t_now = time()
                 dt = np.min((t_now - t, self.max_dt.value))
                 t = t_now
-                x = np.clip(0, 1, int(string) / 1024) * np.pi
+                x = np.clip(int(string) / 1024, 0, 1) * np.pi
             except Exception:
                 pass
             else:
                 v = np.sin(x) if x < np.pi / 2 else 1 + 1 / np.tan(x)
-                p = np.clip(0, 1, x * 4 / np.pi - 3) * 100
+                p = np.clip(x * 4 / np.pi - 3, 0, 1) * 100
                 self.pub_comfort.publish(Float64(data=self.comfort_rate.value * v * dt))
                 self.pub_pressure.publish(Float64(data=p))
 

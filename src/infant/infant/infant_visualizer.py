@@ -87,7 +87,6 @@ class InfantVisualizer(Node):
         delta_x = np.round(self.delta.value * w).astype(int)
         delta_y = np.round(self.delta.value * h).astype(int)
         while True:
-            # self.get_logger().info(str([self.alert, self.comfort, self.stage, self.num, self.recovery, self.tgt_focus, self.tgt_pressure]))
             if any(np.equal([self.alert, self.comfort, self.stage, self.num, self.recovery, self.tgt_focus, self.tgt_pressure], None)):
                 continue
             if self.reset:
@@ -147,6 +146,6 @@ class InfantVisualizer(Node):
 
 def main():
     rclpy.init()
-    infant_visualizer = InfantVisualizer(1440, 2560)
+    infant_visualizer = InfantVisualizer(1080, 1920, 500)
     Thread(target=infant_visualizer.start_plotting).start()
     rclpy.spin(infant_visualizer)
